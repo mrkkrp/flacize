@@ -18,7 +18,7 @@ different formats. Most part of it is in lossless form, for example:
 
 * etc.
 
-So, I've decided to bring my entire collection to some uniform view by
+So, I've decided to bring my entire collection to some uniform form by
 converting all sorts of files into FLAC files of CDDA quality, so that every
 track is a separate file. This is the best way to store music, I think.
 
@@ -46,8 +46,8 @@ to:
 * I could create some reports about duration/quality of every album and save
   them as `.txt` files.
 
-For two last tasks I have [https://github.com/mrkkrp/mkm3u](mkm3u) and
-[https://github.com/mrkkrp/lsa](LSA). The rest of it is done with this
+For two last tasks I have [mkm3u](https://github.com/mrkkrp/mkm3u) and
+[LSA](https://github.com/mrkkrp/lsa). The rest of it is done with this
 script.
 
 ## Installation
