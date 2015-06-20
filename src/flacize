@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Convert any form of audio into CDDA FLAC tracks.
+# Convert any audio files into CDDA quality FLAC tracks.
 #
 # Copyright © 2015 Mark Karpov <markkarpov@openmailbox.org>
 #
@@ -25,9 +25,9 @@ import sys
 
 prog_name = os.path.basename(__file__)
 version = '0.1.0'
-description = 'Convert any form of audio into CDDA FLAC tracks'
+description = 'Convert any audio files into CDDA quality FLAC tracks'
 license = """
-flacize — Convert any form of audio into CDDA FLAC tracks
+flacize — Convert any audio files into CDDA quality FLAC tracks
 
 Copyright © 2015 Mark Karpov
 

@@ -1,9 +1,9 @@
-# Any audio format → CDDA FLAC Tracks
+# Any audio files → CDDA FLAC Tracks
 
 *This is work in process, but it won't take long time to finish.*
 
-My audio collection has grown too big. It consists of various audio files in
-different formats. Most part of it is in lossless form, for example:
+My audio collection has grown rather big. It consists of various audio files
+in different formats. Most part of it is in lossless form, for example:
 
 * FLAC files in separate tracks (various bps, sample rate, etc.);
 
@@ -35,8 +35,8 @@ to:
 
 * eliminate bonus tracks that go with classic albums;
 
-* convert names of files too, so they all are of the same form: `NN Song
-  title.flac`, where `NN` is composition's index in album;
+* convert names of files too, so they all are of the same form: `NN Track
+  Title.flac`, where `NN` is composition's index in album;
 
 * fix names of some albums, for example `Abbey Road [2009 Digital Remaster]`
   should be `Abbey Road` (for I can hear that it's a remaster);
