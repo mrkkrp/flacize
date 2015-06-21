@@ -17,17 +17,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
-import os
-import sys
+import argparse, os, sys
 
 # Constants and other useful values
 
 prog_name = os.path.basename(__file__)
 version = '0.1.0'
 description = 'Convert any audio files into CDDA quality FLAC tracks'
-license = """
-flacize — Convert any audio files into CDDA quality FLAC tracks
+license = """flacize — Convert any audio files into CDDA quality FLAC tracks
 
 Copyright © 2015 Mark Karpov
 
@@ -46,6 +43,38 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 parser = argparse.ArgumentParser(description=description)
+parser.add_argument('dir', metavar='DIR', nargs='?', default=os.getcwd(),
+                    help='directory to scan')
+parser.add_argument('-o', '--out', metavar='DIR', dest='out_dir', default='',
+                    help='output directory (created if needed)')
+parser.add_argument('-r', '--rate', metavar='N', dest='rate', default=44100,
+                    help='output sample rate (defaults to 44100 Hz)')
+parser.add_argument('-w', '--width', metavar='N', dest='width', default=16,
+                    help='output sample width (defaults to 16 bit)')
+parser.add_argument('-c', '--channels', metavar='N', dest='chs', default=2,
+                    help='number of channels (defaults to 2)')
+parser.add_argument('-p', '--preserveq', action='store_true', dest='preserve',
+                    help='preserve quality of originals')
+parser.add_argument('-d', '--delete', action='store_true', dest='delete',
+                    help='delete original files after conversion')
+parser.add_argument('-s', '--shift', metavar='N', dest='shift', default=0,
+                    help='add N to index of every track')
+parser.add_argument('-t', '--total', metavar='N', dest='total',
+                    help='specify total number of tracks N')
+parser.add_argument('-e', '--crop', metavar='N', dest='crop', default=0,
+                    help='crop last N tracks (e.g. remove bonus tracks)')
+parser.add_argument('--license', action='store_true', dest='show_license',
+                    help="show program's license and exit")
+parser.add_argument('--version', action='version',
+                    version='%(prog)s ' + version)
+
+args = parser.parse_args()
+
+# Execution starts here, show license if user wants to see it.
+
+if args.show_license:
+    print(license)
+    exit(0)
 
 # List of features:
 
@@ -58,6 +87,8 @@ parser = argparse.ArgumentParser(description=description)
 # - An option to preserve quality.
 
 # - Process files in current directory or in specified directory.
+
+# - An option to specify output directory (created if needed).
 
 # - An option to delete original files automatically.
 
