@@ -66,7 +66,32 @@ install them too.
 
 ## Documentation
 
-Coming soon…
+`flacize` comes with its own man page. Here is short synopsis:
+
+```
+usage: flacize [-h] [-o DIR] [-r N] [-w N] [-c N] [-p] [-d] [-s N] [-t N] [-e N]
+               [--license] [--version]
+               [DIR]
+
+Convert any audio files into CDDA quality FLAC tracks
+
+positional arguments:
+  DIR                 directory to scan
+
+optional arguments:
+  -h, --help          show this help message and exit
+  -o DIR, --out DIR   output directory (created if needed)
+  -r N, --rate N      output sample rate (defaults to 44100 Hz)
+  -w N, --width N     output sample width (defaults to 16 bit)
+  -c N, --channels N  number of channels (defaults to 2)
+  -p, --preserveq     preserve quality of originals
+  -d, --delete        delete original files after conversion
+  -s N, --shift N     add N to index of every track
+  -t N, --total N     specify total number of tracks N
+  -e N, --crop N      crop last N tracks (e.g. remove bonus tracks)
+  --license           show program's license and exit
+  --version           show program's version number and exit
+```
 
 ## License
 
