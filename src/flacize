@@ -45,7 +45,7 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('dir', metavar='DIR', nargs='?', default=os.getcwd(),
                     help='directory to scan')
-parser.add_argument('-o', '--out', metavar='DIR', dest='out_dir', default='',
+parser.add_argument('-o', '--output', metavar='DIR', dest='out_dir', default='',
                     help='output directory (created if needed)')
 parser.add_argument('-r', '--rate', metavar='N', dest='rate', default=44100,
                     help='output sample rate (defaults to 44100 Hz)')
@@ -53,7 +53,7 @@ parser.add_argument('-w', '--width', metavar='N', dest='width', default=16,
                     help='output sample width (defaults to 16 bit)')
 parser.add_argument('-c', '--channels', metavar='N', dest='chs', default=2,
                     help='number of channels (defaults to 2)')
-parser.add_argument('-p', '--preserveq', action='store_true', dest='preserve',
+parser.add_argument('-p', '--preserve', action='store_true', dest='preserve',
                     help='preserve quality of originals')
 parser.add_argument('-d', '--delete', action='store_true', dest='delete',
                     help='delete original files after conversion')
