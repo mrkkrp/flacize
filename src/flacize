@@ -51,7 +51,6 @@ aexts = frozenset( # recognized audio formats and corresponding extensions:
     , 'flac'   # Free Lossless Audio Codec
     , 'm4a'    # Advanced Audio Coding
     , 'm4p'    # Advanced Audio Coding
-    , 'mp3'    # MPEG Layer 3
     , 'mp4'    # Advanced Audio Coding
     , 'wav'    # Microsoft Wave
     , 'wma' }) # Windows Media Audio 9 Lossless
