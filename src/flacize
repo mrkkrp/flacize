@@ -42,6 +42,14 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+approved_tags = frozenset(
+    { 'ALBUM'
+    , 'ARTIST'
+    , 'DATE'
+    , 'TITLE'
+    , 'TRACKNUMBER'
+    , 'TRACKTOTAL'})
+
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('dir', metavar='DIR', nargs='?', default=os.getcwd(),
                     help='directory to scan')
@@ -144,9 +152,12 @@ def convert_file(**params):
 
 def write_tags(filename, **tags):
     """
-    Write approved tags from ‘tags’ dictionary into filename ‘filename’.
+    Write approved tags from ‘tags’ dictionary into filename
+    ‘filename’. Approved tags are listed in ‘approved_tags’.
     """
-    ...
+    f = taglib.File(filename)
+    f.tags = {k: tags[k] for k in approved_tags}
+    f.save()
 
 # Execution starts here, show license if user wants to see it.
 
