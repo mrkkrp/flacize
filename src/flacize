@@ -145,8 +145,10 @@ def convert_file(**params):
                '-sample-fmt')
     add_to_cmd(params[''])
     add_to_cmd(params['channels'], '-ac')
-    cmd.extend(['-i', params['original']])
-    cmd.append(params['result'])
+    cmd.extend(['-i', params['original'],
+                '-acodec', 'flac',
+                '-compression_level', '8',
+                params['result']])
     print(cmd) # subprocess.call(cmd)
     params['result']
 
