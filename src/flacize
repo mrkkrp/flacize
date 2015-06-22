@@ -94,6 +94,8 @@ def get_track_descs():
     used command line options. Directory to scan is ‘arg.dir’, dispatch for
     .cue + audio data is automatic.
     """
+    # If there are several .cue files in actual directory, abort execution
+    # and tell user that he needs to store stuff separately.
     ...
 
 def get_cue_track_descs(cue_file, audio_file):
@@ -108,6 +110,8 @@ def get_dis_track_descs(files):
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
     """
+    # Remember that ‘TRACKNUMBER’ may be tricky: '1/14' for example, need to
+    # split it.
     ...
 
 def convert_file(**params):
@@ -190,27 +194,16 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 track_descs = get_track_descs()
 
 for desc in track_descs:
-    write_tags(convert_file(**desc), **desc)
+    if desc.get('result'):
+        write_tags(convert_file(**desc), **desc)
 
 if arg.delete:
     for original in {desc['original'] for desc in track_descs}:
         print('deleting ', original) # os.remove(original)
 
-# List of features:
+# List of features to implement:
 
-# - Output format: FLAC tracks, always use maximal compression.
-
-# - User should be able to specify output quality.
-
-# - Default quality should be CDDA: 44.1 kHz, 16 bit, 2 channels.
-
-# - An option to preserve quality.
-
-# - Process files in current directory or in specified directory.
-
-# - An option to specify output directory (created if needed).
-
-# - An option to delete original files automatically.
+# - An option to preserve quality / specify quality.
 
 # - An option to increment index of every composition.
 
@@ -218,14 +211,6 @@ if arg.delete:
 
 # - An option to eliminate N last tracks (correct total number of tracks
 #   unless it's specified explicitly).
-
-# - If there is a .cue file in actual directory, find corresponding audio
-#   file and split it as needed, produce separate tracks.
-
-# - If there are several .cue files in actual directory, abort execution and
-#   tell user that he needs to store stuff separately.
-
-# - For CUEd files .cue files is the source of tags.
 
 # - Preserve useful tags: «artist», «album», «year», «title», but process
 #   them so they are in normal form (delete extra white-space, etc).
@@ -237,10 +222,6 @@ if arg.delete:
 
 # - Tag «total tracks» is either given explicitly or it's calculated as
 #   total number of files to process (see additional manipulations above).
-
-# - Make sure that tags «comment» and «genre» are always empty, as well as
-#   all other tags that we don't specify explicitly (total number of disks,
-#   for example).
 
 # - Names of result files are not the same as original (which may be absent
 #   if it's .cue + single audio file scheme), but are composed by this
