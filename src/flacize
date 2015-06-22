@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, os, sys
+import argparse, os, subprocess, sys
 
 # Constants and other useful values
 
@@ -102,11 +102,11 @@ def get_dis_track_descs(files):
     """
     ...
 
-def convert_file(info):
+def convert_file(**params):
     """
-    Convert audio file using FFmpeg converter. ‘info’ dictionary must contain
-    “original” and “result”, other parameters are optional (if they are
-    absent, presume parameters of original):
+    Convert audio file using FFmpeg converter. ‘params’ dictionary must
+    contain “original” and “result” entries, other parameters are optional
+    (if they are absent, presume parameters of original):
 
     “start_time” — result file must be fragment of original file starting at
     this moment of time (floating point value, number of seconds or string
@@ -124,11 +124,25 @@ def convert_file(info):
     “channels” — number of channels in result file.
 
     Return name of result file.
-
     """
-    ...
+    cmd = ['ffmpeg', '-y']
+    def add_to_cmd(value, option):
+        nonlocal cmd
+        if value:
+            cmd.extend([option, str(value)])
+    add_to_cmd(params['start_time'], '-ss')
+    add_to_cmd(params['end_time'], '-to')
+    add_to_cmd(params['sample_rate'], '-ar')
+    add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(params.get('sample_width')),
+               '-sample-fmt')
+    add_to_cmd(params[''])
+    add_to_cmd(params['channels'], '-ac')
+    cmd.extend(['-i', params['original']])
+    cmd.append(params['result'])
+    print(cmd) # subprocess.call(cmd)
+    params['result']
 
-def write_tags(filename, tags):
+def write_tags(filename, **tags):
     """
     Write approved tags from ‘tags’ dictionary into filename ‘filename’.
     """
@@ -162,11 +176,11 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 track_descs = get_track_descs()
 
 for desc in track_descs:
-    write_tags(convert_file(desc), desc)
+    write_tags(convert_file(**desc), **desc)
 
 if arg.delete:
     for original in {desc['original'] for desc in track_descs}:
-        os.remove(original)
+        print('deleting ', original) # os.remove(original)
 
 # List of features:
 
