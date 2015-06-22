@@ -155,9 +155,10 @@ def write_tags(filename, **tags):
     Write approved tags from ‘tags’ dictionary into filename
     ‘filename’. Approved tags are listed in ‘approved_tags’.
     """
-    f = taglib.File(filename)
-    f.tags = {k: tags[k] for k in approved_tags}
-    f.save()
+    # f = taglib.File(filename)
+    # f.tags = {k: [tags[k]] for k in approved_tags}
+    # f.save()
+    print('tags ', {k: [tags[k]] for k in approved_tags})
 
 # Execution starts here, show license if user wants to see it.
 
