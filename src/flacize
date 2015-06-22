@@ -161,7 +161,7 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 
 track_descs = get_track_descs()
 
-for desc in track_desc:
+for desc in track_descs:
     write_tags(convert_file(desc), desc)
 
 if arg.delete:
