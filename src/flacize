@@ -108,15 +108,15 @@ def get_track_descs():
     used command line options. Directory to scan is ‘arg.dir’, dispatch for
     .cue + audio data is automatic.
     """
-    all_files = os.listdir(args.dir)
+    all_files = [os.path.join(args.dir, f) for f in os.listdir(args.dir)]
     cue_files = fnmatch.filter(all_files, '*.cue')
     if len(cue_files) > 1:
         failure('too many .cue files in ‘%s’' % os.path.abspath(arg.dir))
     if len(cue_files) == 1:
-        get_cue_track_descs(cue_files[0])
+        return get_cue_track_descs(cue_files[0])
     else:
-        get_dis_track_descs([f for f in sorted(all_files)
-                            if os.path.splitext(f)[1][1:] in aexts])
+        return get_dis_track_descs([f for f in sorted(all_files)
+                                    if os.path.splitext(f)[1][1:] in aexts])
 
 def get_cue_track_descs(cue_file):
     """
@@ -130,8 +130,30 @@ def get_dis_track_descs(files):
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
     """
-    # Remember that ‘TRACKNUMBER’ may be tricky: '1/14' for example, need to
-    # split it.
+    def get_for_one(filename):
+        F = taglib.File(filename)
+        desc = {}
+        # Tech parameters
+        if not args.preserve:
+            desc['sample_rate'] = args.rate
+            desc['sample_width'] = args.width
+            desc['channels'] = args.chs
+        # Meta data (fix me: intelligent processing needed)
+        desc['ALBUM'] = F.tags.get('ALBUM', '?')
+        desc['ARTIST'] = F.tags.get('ARTIST', '?')
+        desc['DATE'] = F.tags.get('DATE', '?')
+        track_title = F.tags.get('TITLE', '?')
+        desc['TITLE'] = track_title
+        # Remember that ‘TRACKNUMBER’ may be tricky: '1/14' for example,
+        # need to split it.
+        track_number = F.tags.get('TRACKNUMBER', 1)
+        desc['TRACKNUMBER'] = track_number
+        desc['TRACKTOTAL'] = F.tags.get('TRACKTOTAL', 1)
+        # Basic parameters
+        desc['original'] = filename
+        desc['result'] = os.path.join(args.out_dir, 'generate it')
+        return desc
+    return [get_for_one(f) for f in files]
 
     # An option to preserve quality / specify quality.
 
