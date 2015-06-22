@@ -146,7 +146,7 @@ def convert_file(**params):
     add_to_cmd(params['end_time'], '-to')
     add_to_cmd(params['sample_rate'], '-ar')
     add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(params.get('sample_width')),
-               '-sample-fmt')
+               '-sample_fmt')
     add_to_cmd(params[''])
     add_to_cmd(params['channels'], '-ac')
     cmd.extend(['-i', params['original'],
