@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, os, subprocess, sys
+import argparse, fnmatch, os, subprocess, sys
 
 # Constants and other useful values
 
@@ -41,6 +41,20 @@ details.
 You should have received a copy of the GNU General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 """
+
+aexts = frozenset( # recognized audio formats and corresponding extensions:
+    { 'aac'    # Advanced Audio Coding
+    , 'aif'    # Audio Interchange File Format
+    , 'aifc'   # Audio Interchange File Format
+    , 'aiff'   # Audio Interchange File Format
+    , 'ape'    # Monkey's Audio
+    , 'flac'   # Free Lossless Audio Codec
+    , 'm4a'    # Advanced Audio Coding
+    , 'm4p'    # Advanced Audio Coding
+    , 'mp3'    # MPEG Layer 3
+    , 'mp4'    # Advanced Audio Coding
+    , 'wav'    # Microsoft Wave
+    , 'wma' }) # Windows Media Audio 9 Lossless
 
 approved_tags = frozenset(
     { 'ALBUM'
@@ -94,11 +108,17 @@ def get_track_descs():
     used command line options. Directory to scan is ‘arg.dir’, dispatch for
     .cue + audio data is automatic.
     """
-    # If there are several .cue files in actual directory, abort execution
-    # and tell user that he needs to store stuff separately.
-    ...
+    all_files = os.listdir(args.dir)
+    cue_files = fnmatch.filter(all_files, '*.cue')
+    if len(cue_files) > 1:
+        failure('too many .cue files in ‘%s’' % os.path.abspath(arg.dir))
+    if len(cue_files) == 1:
+        get_cue_track_descs(cue_files[0])
+    else:
+        get_dis_track_descs([f for f in sorted(all_files)
+                            if os.path.splitext(f)[1][1:] in aexts])
 
-def get_cue_track_descs(cue_file, audio_file):
+def get_cue_track_descs(cue_file):
     """
     Return list of dictionaries containing full description of every track to
     process. This function tries to process .cue + audio thing.
@@ -112,6 +132,31 @@ def get_dis_track_descs(files):
     """
     # Remember that ‘TRACKNUMBER’ may be tricky: '1/14' for example, need to
     # split it.
+
+    # An option to preserve quality / specify quality.
+
+    # An option to increment index of every composition.
+
+    # An option to specify total number of compositions (overwrite inferred).
+
+    # An option to eliminate N last tracks (correct total number of tracks
+    # unless it's specified explicitly).
+
+    # Preserve useful tags: «artist», «album», «year», «title», but process
+    # them so they are in normal form (delete extra white-space, etc).
+
+    # If tag «track index» present, use it to calculate index of composition
+    # (but correct it too, delete leading zeros, for example). If such a tag
+    # is missing and we deal with separate tracks, use index of actual
+    # composition in list of sorted file names to get its index.
+
+    # Tag «total tracks» is either given explicitly or it's calculated as
+    # total number of files to process (see additional manipulations above).
+
+    # Names of result files are not the same as original (which may be
+    # absent if it's .cue + single audio file scheme), but are composed by
+    # this pattern ‘NN Composition Title.flac’. So tag «track index» and
+    # «title» determine file name fully.
     ...
 
 def convert_file(**params):
@@ -200,30 +245,3 @@ for desc in track_descs:
 if arg.delete:
     for original in {desc['original'] for desc in track_descs}:
         print('deleting ', original) # os.remove(original)
-
-# List of features to implement:
-
-# - An option to preserve quality / specify quality.
-
-# - An option to increment index of every composition.
-
-# - An option to specify total number of compositions (overwrite inferred).
-
-# - An option to eliminate N last tracks (correct total number of tracks
-#   unless it's specified explicitly).
-
-# - Preserve useful tags: «artist», «album», «year», «title», but process
-#   them so they are in normal form (delete extra white-space, etc).
-
-# - If tag «track index» present, use it to calculate index of composition
-#   (but correct it too, delete leading zeros, for example). If such a tag
-#   is missing and we deal with separate tracks, use index of actual
-#   composition in list of sorted file names to get its index.
-
-# - Tag «total tracks» is either given explicitly or it's calculated as
-#   total number of files to process (see additional manipulations above).
-
-# - Names of result files are not the same as original (which may be absent
-#   if it's .cue + single audio file scheme), but are composed by this
-#   pattern ‘NN Composition Title.flac’. So tag «track index» and «title»
-#   determine file name fully.
