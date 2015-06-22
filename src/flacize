@@ -70,11 +70,97 @@ parser.add_argument('--version', action='version',
 
 args = parser.parse_args()
 
+# Some functions that help us to fulfill our task.
+
+def failure(str):
+    """
+    Print error message ‘str’ to stderr and exit with code 1.
+    """
+    print(prog_name, ": error: ", str, file=sys.stderr)
+    exit(1)
+
+def get_track_desc():
+    """
+    Return list of dictionaries containing full description of every track
+    to process. The returned information is already corrected according to
+    used command line options. Directory to scan is ‘arg.dir’, dispatch for
+    .cue + audio data is automatic.
+    """
+    ...
+
+def get_cue_track_desc(cue_file, audio_file):
+    """
+    Return list of dictionaries containing full description of every track to
+    process. This function tries to process .cue + audio thing.
+    """
+    ...
+
+def get_dis_track_desc(files):
+    """
+    Return list of dictionaries containing full description of every track
+    to process. This function works with collection of separate tracks.
+    """
+    ...
+
+def convert_file(info):
+    """Convert audio file using FFmpeg converter. ‘info’ dictionary must contain
+    “ORIGINAL_FILE” and “RESULT_FILE”, other parameters are optional (if
+    they are absent, presume parameters of original):
+
+    “START_TIME” — result file must be fragment of original file starting at
+    this moment of time (floating point value, number of seconds or string
+    of NN:NN:NN.XXX format).
+
+    “END_TIME” — result file must be fragment of original file and this is
+    when it must end (floating point value, number of seconds or string of
+    NN:NN:NN.XXX format).
+
+    “SAMPLE_RATE” — sample rate of result file, in hertz.
+
+    “SAMPLE_WIDTH” — sample width of result file, in bits, valid values are
+    8, 16, and 32.
+
+    “CHANNELS” — number of channels in result file.
+
+    Return name of result file.
+    """
+    ...
+
+def write_tags(filename, tags):
+    """
+    Write approved tags from ‘tags’ dictionary into filename ‘filename’.
+    """
+    ...
+
 # Execution starts here, show license if user wants to see it.
 
 if args.show_license:
     print(license)
     exit(0)
+
+# Test if FFmpeg console application is present on this system, just in
+# case.
+
+if not shutil.which('ffmpeg'):
+    failure('cannot find ‘ffmpeg’ program')
+
+# If user has specified output directory, we should make sure that it does
+# exist.
+
+if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
+
+# First of all, we need to get list of dictionaries that contain meta-data,
+# file name, information about start time and end time, indexation and total
+# number of tracks, etc. The whole list must be formed before translation
+# because need to have all the data at once (for example to count total
+# number of tracks or specify start and end time for audio that comes with a
+# .cue file). Every dictionary in the list may duplicate some info, the idea
+# is that it must contain full description of given track for processing.
+
+for desc in get_track_desc():
+    result_file = convert_file(desc)
+    if arg.delete: os.remove(result_file)
+    write_tags(result_file, desc)
 
 # List of features:
 
