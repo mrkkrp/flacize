@@ -79,7 +79,7 @@ def failure(str):
     print(prog_name, ": error: ", str, file=sys.stderr)
     exit(1)
 
-def get_track_desc():
+def get_track_descs():
     """
     Return list of dictionaries containing full description of every track
     to process. The returned information is already corrected according to
@@ -88,14 +88,14 @@ def get_track_desc():
     """
     ...
 
-def get_cue_track_desc(cue_file, audio_file):
+def get_cue_track_descs(cue_file, audio_file):
     """
     Return list of dictionaries containing full description of every track to
     process. This function tries to process .cue + audio thing.
     """
     ...
 
-def get_dis_track_desc(files):
+def get_dis_track_descs(files):
     """
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
@@ -103,26 +103,28 @@ def get_dis_track_desc(files):
     ...
 
 def convert_file(info):
-    """Convert audio file using FFmpeg converter. ‘info’ dictionary must contain
-    “ORIGINAL_FILE” and “RESULT_FILE”, other parameters are optional (if
-    they are absent, presume parameters of original):
+    """
+    Convert audio file using FFmpeg converter. ‘info’ dictionary must contain
+    “original” and “result”, other parameters are optional (if they are
+    absent, presume parameters of original):
 
-    “START_TIME” — result file must be fragment of original file starting at
+    “start_time” — result file must be fragment of original file starting at
     this moment of time (floating point value, number of seconds or string
     of NN:NN:NN.XXX format).
 
-    “END_TIME” — result file must be fragment of original file and this is
+    “end_time” — result file must be fragment of original file and this is
     when it must end (floating point value, number of seconds or string of
     NN:NN:NN.XXX format).
 
-    “SAMPLE_RATE” — sample rate of result file, in hertz.
+    “sample_rate” — sample rate of result file, in hertz.
 
-    “SAMPLE_WIDTH” — sample width of result file, in bits, valid values are
+    “sample_width” — sample width of result file, in bits, valid values are
     8, 16, and 32.
 
-    “CHANNELS” — number of channels in result file.
+    “channels” — number of channels in result file.
 
     Return name of result file.
+
     """
     ...
 
@@ -157,10 +159,14 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 # .cue file). Every dictionary in the list may duplicate some info, the idea
 # is that it must contain full description of given track for processing.
 
-for desc in get_track_desc():
-    result_file = convert_file(desc)
-    if arg.delete: os.remove(result_file)
-    write_tags(result_file, desc)
+track_descs = get_track_descs()
+
+for desc in track_desc:
+    write_tags(convert_file(desc), desc)
+
+if arg.delete:
+    for original in {desc['original'] for desc in track_descs}:
+        os.remove(original)
 
 # List of features:
 
