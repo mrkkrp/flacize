@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, fnmatch, os, subprocess, sys
+import argparse, fnmatch, os, re, shutil, subprocess, sys, taglib
 
 # Constants and other useful values
 
@@ -76,6 +76,8 @@ parser.add_argument('-t', '--total', metavar='N', dest='total',
                     help='specify total number of tracks N')
 parser.add_argument('-e', '--crop', metavar='N', dest='crop', default=0,
                     help='crop last N tracks (e.g. remove bonus tracks)')
+parser.add_argument('-a', '--dont-ask', action='store_true', dest='dont_ask',
+                    help="don't ask user even if cannot deduce some tag")
 parser.add_argument('--license', action='store_true', dest='show_license',
                     help="show program's license and exit")
 parser.add_argument('--version', action='version',
@@ -92,13 +94,29 @@ def failure(str):
     print(prog_name, ": error: ", str, file=sys.stderr)
     exit(1)
 
+def tag_fallback(tag_name, deduced_val='?'):
+    """
+    Ask user to enter value of tag ‘tag_name’ manually (last resort). Return
+    user's input or value of ‘deduced_val’ is ‘args.dont_ask’ is
+    ‘True’. Remember return value and use it if the same tag is asked
+    again. This function is best for “ALBUM”, “ARTIST”, and “DATE” tags.
+    """
+    if not tag_name in tag_fallback.vals:
+        tag_fallback.vals[tag_name] = (deduced_val if args.dont_ask else
+    input('Cannot deduce value of tag ‘%s’ ≈ %s: ' % (tag_name, deduced_val)))
+    return tag_fallback.vals[tag_name]
+
+tag_fallback.vals = {} # here we store already asked tags
+
 class Track:
     """
     The class models a track to convert. It includes information about
     location of original file, name of result file, possible changes in
     various parameters of audio and collection of tags.
     """
-    def __init__(self, origin, tags={}):
+    def __init__(self, origin, tags={},
+                 start_time=None, end_time=None,
+                 raw_index=1, raw_total=1):
         self.origin = origin
         # set quality parameters unless we must preserve it
         if args.preserve:
@@ -109,6 +127,9 @@ class Track:
             self.sample_rate  = None
             self.sample_width = None
             self.channels     = None
+        # start and end time (only useful when splitting a CUE)
+        self.start_time = start_time
+        self.end_time = end_time
         # copy or deduce tags, ‘tags’ variable contains raw extracted data
         self.tags = { 'ALBUM'       : tags.get('ALBUM', '?')
                     , 'ARTIST'      : tags.get('ARTIST', '?')
@@ -167,9 +188,9 @@ class Track:
                     self.result])
         print(cmd) # subprocess.call(cmd)
         # F = taglib.File(self.result)
-        # F.tags = self.tags
+        # F.tags = {k: [self.tags[k]] for k in self.tags}
         # F.save()
-        print('tags: ', F.tags)
+        print('tags: ', {k: [self.tags[k]] for k in self.tags})
         self.result
 
 def get_tracks():
@@ -201,10 +222,13 @@ def get_dis_tracks(files):
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
     """
-    def make_track(origin):
-        F = taglib.File(origin)
-        return Track(origin, F.tags)
-    return [make_track(f) for f in files]
+    total = len(files)
+    tracks = []
+    for (i, f) in enumerate(files):
+        F = taglib.File(f)
+        tags = {k: F.tags[k][0] for k in F.tags}
+        tracks.append(Track(f, tags=tags, raw_index=i, raw_total=total))
+    return tracks
 
 # Execution starts here, show license if user wants to see it.
 
@@ -231,11 +255,11 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 # .cue file). Every dictionary in the list may duplicate some info, the idea
 # is that it must contain full description of given track for processing.
 
-tracks = get_track_descs()
+tracks = get_tracks()
 
 for track in tracks:
     track.convert_file()
 
-if arg.delete:
+if args.delete:
     for origin in {track.origin for track in tracks}:
         print('deleting ', origin) # os.remove(origin)
