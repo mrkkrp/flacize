@@ -17,7 +17,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, fnmatch, os, re, shutil, subprocess, sys, taglib
+import argparse
+import fnmatch
+import itertools
+import os
+import re
+import shutil
+import subprocess
+import sys
+import taglib
 
 # Constants and other useful values
 
@@ -94,7 +102,7 @@ def failure(str):
     print(prog_name, ": error: ", str, file=sys.stderr)
     exit(1)
 
-def tag_fallback(tag_name, deduced_val='?'):
+def tag_fallback(tag_name, deduced_val='?') -> str:
     """
     Ask user to enter value of tag ‘tag_name’ manually (last resort). Return
     user's input or value of ‘deduced_val’ is ‘args.dont_ask’ is
@@ -103,10 +111,38 @@ def tag_fallback(tag_name, deduced_val='?'):
     """
     if not tag_name in tag_fallback.vals:
         tag_fallback.vals[tag_name] = (deduced_val if args.dont_ask else
-    input('Cannot deduce value of tag ‘%s’ ≈ %s: ' % (tag_name, deduced_val)))
+    input('Cannot deduce value of tag ‘%s’ ≈ %s: ' % (tag_name, deduced_val))
+        or deduced_val)
     return tag_fallback.vals[tag_name]
 
 tag_fallback.vals = {} # here we store already asked tags
+
+def extract_title(s) -> str:
+    """
+    Return sub-string of ‘s’ from first alphabetic char to end.
+    """
+    return s[next((i for i, v in enumerate(s) if v.isalpha())):]
+
+def extract_num_prefix(s) -> str:
+    """
+    Return sub-string of ‘s’ containing its (possibly empty) numeric prefix.
+    """
+    return ''.join(itertools.takewhile(str.isdecimal, s.strip()))
+
+def simplify_tag(s) -> str:
+    """
+    Simplify tag deleting trailing white space, extra white space between
+    words, and everything in brackets [].
+    """
+    return ' '.join(s.split()) # FIX ME: I'm incomplete
+
+def output_name(out_dir, name, ext) -> str:
+    """
+    Join directory ‘out_dir’, base name ‘name’ and extension ‘ext’. ‘name’
+    is transformed so it can be used on all major operating systems.
+    """
+    return os.path.join(out_dir, re.sub(r'[\x00/\\?%*:|"<>]', '_', name) +
+                        os.path.extsep + ext if ext else '')
 
 class Track:
     """
@@ -120,33 +156,40 @@ class Track:
         self.origin = origin
         # set quality parameters unless we must preserve it
         if args.preserve:
-            self.sample_rate  = args.rate
-            self.sample_width = args.width
-            self.channels     = args.chs
-        else:
             self.sample_rate  = None
             self.sample_width = None
             self.channels     = None
+        else:
+            self.sample_rate  = args.rate
+            self.sample_width = args.width
+            self.channels     = args.chs
         # start and end time (only useful when splitting a CUE)
         self.start_time = start_time
         self.end_time = end_time
         # copy or deduce tags, ‘tags’ variable contains raw extracted data
-        self.tags = { 'ALBUM'       : tags.get('ALBUM', '?')
-                    , 'ARTIST'      : tags.get('ARTIST', '?')
-                    , 'DATE'        : tags.get('DATE', '?')
-                    , 'TITLE'       : tags.get('TITLE', '?')
-                    , 'TRACKNUMBER' : tags.get('TRACKNUMBER', '1')
-                    , 'TRACKTOTAL'  : tags.get('TRACKTOTAL', '1')}
+        pdir = os.path.basename(os.path.abspath(args.dir))
+        # ALBUM
+        self.tags['ALBUM'] = (tags.get('ALBUM')
+            or tag_fallback('ALBUM', extract_title(pdir)))
+        # ARTIST
+        self.tags['ARTIST'] = (tags.get('ARTIST')
+            or tag_fallback('ARTIST'))
+        # DATE
+        self.tags['DATE'] = (tags.get('DATE')
+            or tag_fallback('DATE', extract_num_prefix(pdir)))
+        # TITLE
+        self.tags['TITLE'] = (tags.get('TITLE')
+            or extract_title(os.path.splitext(os.path.basename(origin))[0]))
+        # TRACKNUMBER & TRACKTOTAL
+        # self.tags = { 'TRACKNUMBER' : tags.get('TRACKNUMBER', '1')
+        #             , 'TRACKTOTAL'  : tags.get('TRACKTOTAL', '1')}
+        self.tags = [simplify_tag(tag) for tag in self.tags]
         # An option to increment index of every composition.
 
         # An option to specify total number of compositions (overwrite inferred).
 
         # An option to eliminate N last tracks (correct total number of
         # tracks unless it's specified explicitly).
-
-        # Preserve useful tags: «artist», «album», «year», «title», but
-        # process them so they are in normal form (delete extra white-space,
-        # etc).
 
         # If tag «track index» present, use it to calculate index of
         # composition (but correct it too, delete leading zeros, for
@@ -167,7 +210,7 @@ class Track:
         self.result = os.path.join(args.out_dir, 'generate it here')
         # ↑ ‘result’ may be None if the file should be omitted
 
-    def convert_file(self):
+    def convert_file(self) -> str:
         """
         Convert the audio file using FFmpeg converter.
         """
@@ -193,7 +236,7 @@ class Track:
         print('tags: ', {k: [self.tags[k]] for k in self.tags})
         self.result
 
-def get_tracks():
+def get_tracks() -> list:
     """
     Return list of dictionaries containing full description of every track
     to process. The returned information is already corrected according to
@@ -210,14 +253,14 @@ def get_tracks():
         return get_dis_tracks([f for f in sorted(all_files)
                                if os.path.splitext(f)[1][1:] in aexts])
 
-def get_cue_tracks(cue_file):
+def get_cue_tracks(cue_file) -> list:
     """
     Return list of dictionaries containing full description of every track to
     process. This function tries to process .cue + audio thing.
     """
     failure('Not implemented yet!')
 
-def get_dis_tracks(files):
+def get_dis_tracks(files) -> list:
     """
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
