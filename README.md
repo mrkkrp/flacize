@@ -1,7 +1,5 @@
 # Any audio files → CDDA FLAC Tracks
 
-*This is work in process, but it won't take long time to finish.*
-
 My audio collection has grown rather big. It consists of various audio files
 in different formats. Most part of it is in lossless form, for example:
 
@@ -52,17 +50,26 @@ script.
 
 ## Installation
 
-This is a Python 3 script, you will need Python 3 installed to run it.
+This is a Python 3 script, you will need Python 3 installed to run it. Also,
+it depends on the following things that you need to install too:
 
-To install the software `cd` into the repository and execute the following:
+* [TagLib](http://taglib.github.io/) — a library for reading and editing the
+  meta-data of several popular audio formats;
+
+* [TagLib bindings for Python](https://github.com/supermihi/pytaglib);
+
+* [FFmpeg](https://ffmpeg.org/) — über-level audio and video converter.
+
+TagLib and FFmpeg are available in repositories of most major distributions,
+Python bindings for TabLib can be installed with `pip` quite easily too.
+
+To install `flacize`, `cd` into the repository and execute the following:
 
 ```
 # bash install.sh
 ```
 
-Done. You can use `uninstall.sh` script to uninstall the software. Please
-note that you'll need `xxx` and `yyy` to actually convert anything, so
-install them too.
+Done. You can use `uninstall.sh` script to uninstall the software.
 
 ## Documentation
 
@@ -89,6 +96,7 @@ optional arguments:
   -s N, --shift N       add N to index of every track
   -t N, --total N       specify total number of tracks N
   -e N, --crop N        crop last N tracks (e.g. remove bonus tracks)
+  -a, --dont-ask        don't ask user even if cannot deduce some tag
   --license             show program's license and exit
   --version             show program's version number and exit
 ```
