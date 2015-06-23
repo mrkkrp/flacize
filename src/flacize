@@ -55,14 +55,6 @@ aexts = frozenset( # recognized audio formats and corresponding extensions:
     , 'wav'    # Microsoft Wave
     , 'wma' }) # Windows Media Audio 9 Lossless
 
-approved_tags = frozenset(
-    { 'ALBUM'
-    , 'ARTIST'
-    , 'DATE'
-    , 'TITLE'
-    , 'TRACKNUMBER'
-    , 'TRACKTOTAL'})
-
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('dir', metavar='DIR', nargs='?', default=os.getcwd(),
                     help='directory to scan')
@@ -100,7 +92,87 @@ def failure(str):
     print(prog_name, ": error: ", str, file=sys.stderr)
     exit(1)
 
-def get_track_descs():
+class Track:
+    """
+    The class models a track to convert. It includes information about
+    location of original file, name of result file, possible changes in
+    various parameters of audio and collection of tags.
+    """
+    def __init__(self, origin, tags={}):
+        self.origin = origin
+        # set quality parameters unless we must preserve it
+        if args.preserve:
+            self.sample_rate  = args.rate
+            self.sample_width = args.width
+            self.channels     = args.chs
+        else:
+            self.sample_rate  = None
+            self.sample_width = None
+            self.channels     = None
+        # copy or deduce tags, ‘tags’ variable contains raw extracted data
+        self.tags = { 'ALBUM'       : tags.get('ALBUM', '?')
+                    , 'ARTIST'      : tags.get('ARTIST', '?')
+                    , 'DATE'        : tags.get('DATE', '?')
+                    , 'TITLE'       : tags.get('TITLE', '?')
+                    , 'TRACKNUMBER' : tags.get('TRACKNUMBER', '1')
+                    , 'TRACKTOTAL'  : tags.get('TRACKTOTAL', '1')}
+        # An option to increment index of every composition.
+
+        # An option to specify total number of compositions (overwrite inferred).
+
+        # An option to eliminate N last tracks (correct total number of
+        # tracks unless it's specified explicitly).
+
+        # Preserve useful tags: «artist», «album», «year», «title», but
+        # process them so they are in normal form (delete extra white-space,
+        # etc).
+
+        # If tag «track index» present, use it to calculate index of
+        # composition (but correct it too, delete leading zeros, for
+        # example). If such a tag is missing and we deal with separate
+        # tracks, use index of actual composition in list of sorted file
+        # names to get its index.
+
+        # Tag «total tracks» is either given explicitly or it's calculated
+        # as total number of files to process (see additional manipulations
+        # above).
+
+        # Names of result files are not the same as original (which may be
+        # absent if it's .cue + single audio file scheme), but are composed
+        # by this pattern ‘NN Composition Title.flac’. So tag «track index»
+        # and «title» determine file name fully.
+
+        # ↑ fix all this stuff, more intelligent processing
+        self.result = os.path.join(args.out_dir, 'generate it here')
+        # ↑ ‘result’ may be None if the file should be omitted
+
+    def convert_file(self):
+        """
+        Convert the audio file using FFmpeg converter.
+        """
+        cmd = ['ffmpeg', '-y']
+        def add_to_cmd(value, option):
+            nonlocal cmd
+            if value:
+                cmd.extend([option, str(value)])
+        add_to_cmd(self.start_time, '-ss')
+        add_to_cmd(self.end_time, '-to')
+        add_to_cmd(self.sample_rate, '-ar')
+        add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(self.sample_width),
+                   '-sample_fmt')
+        add_to_cmd(self.channels, '-ac')
+        cmd.extend(['-i', self.origin,
+                    '-acodec', 'flac',
+                    '-compression_level', '8',
+                    self.result])
+        print(cmd) # subprocess.call(cmd)
+        # F = taglib.File(self.result)
+        # F.tags = self.tags
+        # F.save()
+        print('tags: ', F.tags)
+        self.result
+
+def get_tracks():
     """
     Return list of dictionaries containing full description of every track
     to process. The returned information is already corrected according to
@@ -112,125 +184,27 @@ def get_track_descs():
     if len(cue_files) > 1:
         failure('too many .cue files in ‘%s’' % os.path.abspath(arg.dir))
     if len(cue_files) == 1:
-        return get_cue_track_descs(cue_files[0])
+        return get_cue_tracks(cue_files[0])
     else:
-        return get_dis_track_descs([f for f in sorted(all_files)
-                                    if os.path.splitext(f)[1][1:] in aexts])
+        return get_dis_tracks([f for f in sorted(all_files)
+                               if os.path.splitext(f)[1][1:] in aexts])
 
-def get_cue_track_descs(cue_file):
+def get_cue_tracks(cue_file):
     """
     Return list of dictionaries containing full description of every track to
     process. This function tries to process .cue + audio thing.
     """
-    ...
+    failure('Not implemented yet!')
 
-def get_dis_track_descs(files):
+def get_dis_tracks(files):
     """
     Return list of dictionaries containing full description of every track
     to process. This function works with collection of separate tracks.
     """
-    def get_for_one(filename):
-        F = taglib.File(filename)
-        desc = {}
-        # Tech parameters
-        if not args.preserve:
-            desc['sample_rate'] = args.rate
-            desc['sample_width'] = args.width
-            desc['channels'] = args.chs
-        # Meta data (fix me: intelligent processing needed)
-        desc['ALBUM'] = F.tags.get('ALBUM', '?')
-        desc['ARTIST'] = F.tags.get('ARTIST', '?')
-        desc['DATE'] = F.tags.get('DATE', '?')
-        track_title = F.tags.get('TITLE', '?')
-        desc['TITLE'] = track_title
-        # Remember that ‘TRACKNUMBER’ may be tricky: '1/14' for example,
-        # need to split it.
-        track_number = F.tags.get('TRACKNUMBER', 1)
-        desc['TRACKNUMBER'] = track_number
-        desc['TRACKTOTAL'] = F.tags.get('TRACKTOTAL', 1)
-        # Basic parameters
-        desc['original'] = filename
-        desc['result'] = os.path.join(args.out_dir, 'generate it')
-        return desc
-    return [get_for_one(f) for f in files]
-
-    # An option to preserve quality / specify quality.
-
-    # An option to increment index of every composition.
-
-    # An option to specify total number of compositions (overwrite inferred).
-
-    # An option to eliminate N last tracks (correct total number of tracks
-    # unless it's specified explicitly).
-
-    # Preserve useful tags: «artist», «album», «year», «title», but process
-    # them so they are in normal form (delete extra white-space, etc).
-
-    # If tag «track index» present, use it to calculate index of composition
-    # (but correct it too, delete leading zeros, for example). If such a tag
-    # is missing and we deal with separate tracks, use index of actual
-    # composition in list of sorted file names to get its index.
-
-    # Tag «total tracks» is either given explicitly or it's calculated as
-    # total number of files to process (see additional manipulations above).
-
-    # Names of result files are not the same as original (which may be
-    # absent if it's .cue + single audio file scheme), but are composed by
-    # this pattern ‘NN Composition Title.flac’. So tag «track index» and
-    # «title» determine file name fully.
-    ...
-
-def convert_file(**params):
-    """
-    Convert audio file using FFmpeg converter. ‘params’ dictionary must
-    contain “original” and “result” entries, other parameters are optional
-    (if they are absent, presume parameters of original):
-
-    “start_time” — result file must be fragment of original file starting at
-    this moment of time (floating point value, number of seconds or string
-    of NN:NN:NN.XXX format).
-
-    “end_time” — result file must be fragment of original file and this is
-    when it must end (floating point value, number of seconds or string of
-    NN:NN:NN.XXX format).
-
-    “sample_rate” — sample rate of result file, in hertz.
-
-    “sample_width” — sample width of result file, in bits, valid values are
-    8, 16, and 32.
-
-    “channels” — number of channels in result file.
-
-    Return name of result file.
-    """
-    cmd = ['ffmpeg', '-y']
-    def add_to_cmd(value, option):
-        nonlocal cmd
-        if value:
-            cmd.extend([option, str(value)])
-    add_to_cmd(params['start_time'], '-ss')
-    add_to_cmd(params['end_time'], '-to')
-    add_to_cmd(params['sample_rate'], '-ar')
-    add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(params.get('sample_width')),
-               '-sample_fmt')
-    add_to_cmd(params[''])
-    add_to_cmd(params['channels'], '-ac')
-    cmd.extend(['-i', params['original'],
-                '-acodec', 'flac',
-                '-compression_level', '8',
-                params['result']])
-    print(cmd) # subprocess.call(cmd)
-    params['result']
-
-def write_tags(filename, **tags):
-    """
-    Write approved tags from ‘tags’ dictionary into filename
-    ‘filename’. Approved tags are listed in ‘approved_tags’.
-    """
-    # f = taglib.File(filename)
-    # f.tags = {k: [tags[k]] for k in approved_tags}
-    # f.save()
-    print('tags ', {k: [tags[k]] for k in approved_tags})
+    def make_track(origin):
+        F = taglib.File(origin)
+        return Track(origin, F.tags)
+    return [make_track(f) for f in files]
 
 # Execution starts here, show license if user wants to see it.
 
@@ -257,12 +231,11 @@ if args.out_dir: os.makedirs(args.out_dir, exist_ok=True)
 # .cue file). Every dictionary in the list may duplicate some info, the idea
 # is that it must contain full description of given track for processing.
 
-track_descs = get_track_descs()
+tracks = get_track_descs()
 
-for desc in track_descs:
-    if desc.get('result'):
-        write_tags(convert_file(**desc), **desc)
+for track in tracks:
+    track.convert_file()
 
 if arg.delete:
-    for original in {desc['original'] for desc in track_descs}:
-        print('deleting ', original) # os.remove(original)
+    for origin in {track.origin for track in tracks}:
+        print('deleting ', origin) # os.remove(origin)
