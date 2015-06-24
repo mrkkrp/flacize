@@ -18,6 +18,7 @@
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import copy
 import fnmatch
 import itertools
 import os
@@ -268,15 +269,52 @@ def get_tracks() -> list:
 
 def get_cue_tracks(cue_file) -> list:
     """
-    Return list of dictionaries containing full description of every track to
+    Return list of ‘Track’ objects — descriptions of every track to
     process. This function tries to process .cue + audio thing.
     """
-    failure('Not implemented yet!')
+    params = []
+    index = None
+    cmn_params = {'tags': {}}
+    for line in open(cue_file):
+        def check_cmn(regexp, param_name, tag=False) -> bool:
+            t = re.match(regexp, line)
+            if t:
+                t = t.groups()[0].strip('"')
+                if tag:
+                    cmn_params['tags'][param_name] = t
+                else:
+                    cmn_params[param_name] = t
+                return True
+            return False
+        if check_cmn(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'ALBUM', tag=True):
+            continue
+        if check_cmn(r'^\s*PERFORMER\s+("[^"]*"|\S+)\s*', 'ARTIST', tag=True):
+            continue
+        if check_cmn(r'^\s*REM\s+DATE\s+(\d+)\s*', 'DATE', tag=True):
+            continue
+        if check_cmn(r'^\s*FILE\s+("[^"]*"|\S+)\s*', 'origin'):
+            continue
+        # individual track
+        t = re.match(r'^\s*TRACK\s+(\d+)\s+AUDIO', line)
+        if t: # new track
+            index = int(t.groups()[0])
+            params.append(copy.deepcopy(cmn_params))
+            params[index-1]['tags']['TRACKNUMBER'] = index
+            params[index-1]['raw_index'] = index
+        elif index: # continuing description of a track…
+            ... # start_time, end_time, ['tags']['TITLE']
+    # add “TRACKTOTAL” tag
+    track_total = len(params)
+    for p in params:
+        p['tags']['TRACKTOTAL'] = track_total
+        p['raw_total'] = track_total
+    # apply params to ‘Track’ and return created objects
+    return params # [Track(**p) for p in params]
 
 def get_dis_tracks(files) -> list:
     """
-    Return list of dictionaries containing full description of every track
-    to process. This function works with collection of separate tracks.
+    Return list of ‘Track’ objects — descriptions of every track to
+    process. This function works with collection of separate tracks.
     """
     total = len(files)
     tracks = []
