@@ -27,6 +27,7 @@ import shutil
 import subprocess
 import sys
 import taglib
+import time
 
 # Constants and other useful values
 
@@ -279,30 +280,47 @@ def get_cue_tracks(cue_file) -> list:
         def check_cmn(regexp, param_name, tag=False) -> bool:
             t = re.match(regexp, line)
             if t:
-                t = t.groups()[0].strip('"')
+                t = t.group(1).strip('"')
                 if tag:
                     cmn_params['tags'][param_name] = t
                 else:
                     cmn_params[param_name] = t
                 return True
             return False
-        if check_cmn(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'ALBUM', tag=True):
-            continue
-        if check_cmn(r'^\s*PERFORMER\s+("[^"]*"|\S+)\s*', 'ARTIST', tag=True):
-            continue
-        if check_cmn(r'^\s*REM\s+DATE\s+(\d+)\s*', 'DATE', tag=True):
-            continue
-        if check_cmn(r'^\s*FILE\s+("[^"]*"|\S+)\s*', 'origin'):
-            continue
-        # individual track
+        def check_id(regexp, param_name, tag=False) -> bool:
+            t = re.match(regexp, line)
+            if t:
+                t = t.group(1).strip('"')
+                if tag:
+                    params[index-1]['tags'][param_name] = t
+                else:
+                    params[index-1][param_name] = t
+                return True
+            return False
+        if not index: # parameters that are common among all tracks
+            if check_cmn(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'ALBUM', tag=True):
+                continue
+            if check_cmn(r'^\s*PERFORMER\s+("[^"]*"|\S+)\s*', 'ARTIST', tag=True):
+                continue
+            if check_cmn(r'^\s*REM\s+DATE\s+("?\d+"?)\s*', 'DATE', tag=True):
+                continue
+            if check_cmn(r'^\s*FILE\s+("[^"]*"|\S+)\s*', 'origin'):
+                continue
+        # individual track parsing
         t = re.match(r'^\s*TRACK\s+(\d+)\s+AUDIO', line)
         if t: # new track
-            index = int(t.groups()[0])
+            index = int(t.group(1))
             params.append(copy.deepcopy(cmn_params))
             params[index-1]['tags']['TRACKNUMBER'] = index
             params[index-1]['raw_index'] = index
         elif index: # continuing description of a track…
-            ... # start_time, end_time, ['tags']['TITLE']
+            if check_id(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'TITLE', tag=True):
+                continue
+            if check_id(r'^\s*INDEX\s+01\s+([\d|:]+)\s*', 'start_time'):
+                # additional processing of ‘start_time’ value is required
+                if index > 1:
+                    params[index-2]['end_time'] = params[index-1]['start_time']
+                continue
     # add “TRACKTOTAL” tag
     track_total = len(params)
     for p in params:
