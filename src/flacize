@@ -99,6 +99,7 @@ parser.add_argument('--version', action='version',
                     version='%(prog)s ' + version)
 
 args = parser.parse_args()
+deletable = set()
 
 # Some functions that help us to fulfill our task.
 
@@ -234,6 +235,7 @@ class Track:
                 protected = protected_name(self.origin)
                 os.rename(self.origin, protected)
                 self.origin = protected
+        deletable.add(self.origin)
 
     def convert_file(self) -> str:
         """
@@ -283,6 +285,7 @@ def get_cue_tracks(cue_file) -> list:
     Return list of ‘Track’ objects — descriptions of every track to
     process. This function tries to process .cue + audio thing.
     """
+    deletable.add(cue_file)
     params = []
     index = None
     cmn_params = {'tags': {}}
@@ -386,5 +389,5 @@ for track in tracks:
     track.convert_file()
 
 if args.delete:
-    for origin in {track.origin for track in tracks}:
-        os.remove(origin)
+    for f in deletable:
+        os.remove(f)
