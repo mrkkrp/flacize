@@ -134,7 +134,7 @@ def simplify_tag(s) -> str:
     Simplify tag deleting trailing white space, extra white space between
     words, and everything in brackets []. Also, trim leading zeros.
     """
-    return ' '.join(s.split()).lstrip('0') # FIX ME: I'm incomplete
+    return ' '.join(re.sub(r'\[.*\]', '', s).split()).lstrip('0')
 
 def output_name(out_dir, name, ext) -> str:
     """
