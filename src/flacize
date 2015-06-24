@@ -69,20 +69,26 @@ parser.add_argument('dir', metavar='DIR', nargs='?', default=os.getcwd(),
 parser.add_argument('-o', '--output', metavar='DIR', dest='out_dir', default='',
                     help='output directory (created if needed)')
 parser.add_argument('-r', '--rate', metavar='N', dest='rate', default=44100,
+                    type=int,
                     help='output sample rate (defaults to 44100 Hz)')
 parser.add_argument('-w', '--width', metavar='N', dest='width', default=16,
+                    type=int,
                     help='output sample width (defaults to 16 bit)')
 parser.add_argument('-c', '--channels', metavar='N', dest='chs', default=2,
+                    type=int,
                     help='number of channels (defaults to 2)')
 parser.add_argument('-p', '--preserve', action='store_true', dest='preserve',
                     help='preserve quality of originals')
 parser.add_argument('-d', '--delete', action='store_true', dest='delete',
                     help='delete original files after conversion')
 parser.add_argument('-s', '--shift', metavar='N', dest='shift', default=0,
+                    type=int,
                     help='add N to index of every track')
 parser.add_argument('-t', '--total', metavar='N', dest='total',
+                    type=int,
                     help='specify total number of tracks N')
 parser.add_argument('-e', '--crop', metavar='N', dest='crop', default=0,
+                    type=int,
                     help='crop last N tracks (e.g. remove bonus tracks)')
 parser.add_argument('-a', '--dont-ask', action='store_true', dest='dont_ask',
                     help="don't ask user even if cannot deduce some tag")
@@ -199,12 +205,14 @@ class Track:
         else:
             ttot = tags.get('TRACKTOTAL', atot and atot[0])
             ttot = int(ttot) if ttot else raw_total
+            if args.crop:
+                ttot -= args.crop
         self.tags['TRACKNUMBER'] = str(tnum)
         self.tags['TRACKTOTAL'] = str(ttot)
         # simplify tag values after all…
         self.tags = {tag: simplify_tag(self.tags[tag]) for tag in self.tags}
         # get output file name
-        if args.crop and ttot - tnum < args.crop:
+        if tnum > ttot:
             self.result = None
         else:
             self.result = output_name(args.out_dir,
