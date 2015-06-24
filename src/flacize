@@ -213,19 +213,18 @@ class Track:
                 cmd.extend([option, str(value)])
         add_to_cmd(self.start_time, '-ss')
         add_to_cmd(self.end_time, '-to')
+        cmd.extend(['-i', self.origin,
+                    '-acodec', 'flac',
+                    '-compression_level', '8'])
         add_to_cmd(self.sample_rate, '-ar')
         add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(self.sample_width),
                    '-sample_fmt')
         add_to_cmd(self.channels, '-ac')
-        cmd.extend(['-i', self.origin,
-                    '-acodec', 'flac',
-                    '-compression_level', '8',
-                    self.result])
-        print(cmd) # subprocess.call(cmd)
-        # F = taglib.File(self.result)
-        # F.tags = {k: [self.tags[k]] for k in self.tags}
-        # F.save()
-        print('tags: ', {k: [self.tags[k]] for k in self.tags})
+        cmd.append(self.result)
+        subprocess.call(cmd)
+        F = taglib.File(self.result)
+        F.tags = {k: [self.tags[k]] for k in self.tags}
+        F.save()
         self.result
 
 def get_tracks() -> list:
@@ -297,4 +296,4 @@ for track in tracks:
 
 if args.delete:
     for origin in {track.origin for track in tracks}:
-        print('deleting ', origin) # os.remove(origin)
+        os.remove(origin)
