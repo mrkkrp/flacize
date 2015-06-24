@@ -111,7 +111,7 @@ def tag_fallback(tag_name, deduced_val='?') -> str:
     """
     if not tag_name in tag_fallback.vals:
         tag_fallback.vals[tag_name] = (deduced_val if args.dont_ask else
-    input('Cannot deduce value of tag ‘%s’ ≈ %s: ' % (tag_name, deduced_val))
+    input('Cannot deduce value of tag ‘%s’ ≈ “%s”: ' % (tag_name, deduced_val))
         or deduced_val)
     return tag_fallback.vals[tag_name]
 
@@ -132,9 +132,9 @@ def extract_num_prefix(s) -> str:
 def simplify_tag(s) -> str:
     """
     Simplify tag deleting trailing white space, extra white space between
-    words, and everything in brackets [].
+    words, and everything in brackets []. Also, trim leading zeros.
     """
-    return ' '.join(s.split()) # FIX ME: I'm incomplete
+    return ' '.join(s.split()).lstrip('0') # FIX ME: I'm incomplete
 
 def output_name(out_dir, name, ext) -> str:
     """
@@ -167,7 +167,9 @@ class Track:
         self.start_time = start_time
         self.end_time = end_time
         # copy or deduce tags, ‘tags’ variable contains raw extracted data
-        pdir = os.path.basename(os.path.abspath(args.dir))
+        self.tags = {}
+        pdir  = os.path.basename(os.path.abspath(args.dir))
+        bname = os.path.splitext(os.path.basename(origin))[0]
         # ALBUM
         self.tags['ALBUM'] = (tags.get('ALBUM')
             or tag_fallback('ALBUM', extract_title(pdir)))
@@ -179,36 +181,26 @@ class Track:
             or tag_fallback('DATE', extract_num_prefix(pdir)))
         # TITLE
         self.tags['TITLE'] = (tags.get('TITLE')
-            or extract_title(os.path.splitext(os.path.basename(origin))[0]))
+            or extract_title(bname))
         # TRACKNUMBER & TRACKTOTAL
-        # self.tags = { 'TRACKNUMBER' : tags.get('TRACKNUMBER', '1')
-        #             , 'TRACKTOTAL'  : tags.get('TRACKTOTAL', '1')}
-        self.tags = [simplify_tag(tag) for tag in self.tags]
-        # An option to increment index of every composition.
-
-        # An option to specify total number of compositions (overwrite inferred).
-
-        # An option to eliminate N last tracks (correct total number of
-        # tracks unless it's specified explicitly).
-
-        # If tag «track index» present, use it to calculate index of
-        # composition (but correct it too, delete leading zeros, for
-        # example). If such a tag is missing and we deal with separate
-        # tracks, use index of actual composition in list of sorted file
-        # names to get its index.
-
-        # Tag «total tracks» is either given explicitly or it's calculated
-        # as total number of files to process (see additional manipulations
-        # above).
-
-        # Names of result files are not the same as original (which may be
-        # absent if it's .cue + single audio file scheme), but are composed
-        # by this pattern ‘NN Composition Title.flac’. So tag «track index»
-        # and «title» determine file name fully.
-
-        # ↑ fix all this stuff, more intelligent processing
-        self.result = os.path.join(args.out_dir, 'generate it here')
-        # ↑ ‘result’ may be None if the file should be omitted
+        tnum, *atot = (tags.get('TRACKNUMBER')
+            or extract_num_prefix(bname)).split('/')
+        tnum = (int(tnum) if tnum else raw_index) + args.shift
+        if args.total:
+            ttot = args.total
+        else:
+            ttot = tags.get('TRACKTOTAL', atot and atot[0])
+            ttot = int(ttot) if ttot else raw_total
+        self.tags['TRACKNUMBER'] = str(tnum)
+        self.tags['TRACKTOTAL'] = str(ttot)
+        # simplify tag values after all…
+        self.tags = {tag: simplify_tag(self.tags[tag]) for tag in self.tags}
+        # get output file name
+        if args.crop and ttot - tnum < args.crop:
+            self.result = None
+        else:
+            self.result = output_name(args.out_dir,
+                ('%02d' % tnum) + ' ' + self.tags['TITLE'], 'flac')
 
     def convert_file(self) -> str:
         """
