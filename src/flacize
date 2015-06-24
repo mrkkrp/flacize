@@ -217,16 +217,17 @@ class Track:
         else:
             self.result = output_name(args.out_dir,
                 ('%02d' % tnum) + ' ' + self.tags['TITLE'], 'flac')
-        # avoid overreads
-        if os.path.abspath(self.origin) == os.path.abspath(self.result):
-            protected = protected_name(self.origin)
-            os.rename(self.origin, protected)
-            self.origin = protected
+            # avoid overreads
+            if os.path.abspath(self.origin) == os.path.abspath(self.result):
+                protected = protected_name(self.origin)
+                os.rename(self.origin, protected)
+                self.origin = protected
 
     def convert_file(self) -> str:
         """
         Convert the audio file using FFmpeg converter.
         """
+        if not self.result: return
         cmd = ['ffmpeg', '-y']
         def add_to_cmd(value, option):
             nonlocal cmd
