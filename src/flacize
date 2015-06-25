@@ -230,18 +230,18 @@ class Track:
         else:
             self.result = output_name(args.out_dir,
                 ('%02d' % tnum) + ' ' + self.tags['TITLE'], 'flac')
-            # avoid overreads
-            if os.path.abspath(self.origin) == os.path.abspath(self.result):
-                protected = protected_name(self.origin)
-                os.rename(self.origin, protected)
-                self.origin = protected
-        deletable.add(self.origin)
 
     def convert_file(self) -> str:
         """
         Convert the audio file using FFmpeg converter.
         """
         if not self.result: return
+        # avoid overreads
+        if os.path.abspath(self.origin) == os.path.abspath(self.result):
+            protected = protected_name(self.origin)
+            os.rename(self.origin, protected)
+            self.origin = protected
+        # construct arguments for invocation of ‘ffmpeg’
         cmd = ['ffmpeg', '-y']
         def add_to_cmd(value, option):
             nonlocal cmd
@@ -257,10 +257,13 @@ class Track:
                    '-sample_fmt')
         add_to_cmd(self.channels, '-ac')
         cmd.append(self.result)
-        subprocess.call(cmd)
+        subprocess.check_call(cmd)
+        # overwrite tags
         F = taglib.File(self.result)
         F.tags = {k: [self.tags[k]] for k in self.tags}
         F.save()
+        # finalize
+        deletable.add(self.origin)
         self.result
 
 def get_tracks() -> list:
