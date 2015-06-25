@@ -315,14 +315,15 @@ def get_cue_tracks(cue_file) -> list:
                     params[index-1][param_name] = t
                 return True
             return False
-        if not index: # parameters that are common among all tracks
+        # parameters that are common among several tracks
+        if check_cmn(r'^\s*FILE\s+("[^"]*"|\S+)\s*', 'origin'):
+            continue
+        if not index:
             if check_cmn(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'ALBUM', tag=True):
                 continue
             if check_cmn(r'^\s*PERFORMER\s+("[^"]*"|\S+)\s*', 'ARTIST', tag=True):
                 continue
             if check_cmn(r'^\s*REM\s+DATE\s+("?\d+"?)\s*', 'DATE', tag=True):
-                continue
-            if check_cmn(r'^\s*FILE\s+("[^"]*"|\S+)\s*', 'origin'):
                 continue
         # individual track parsing
         t = re.match(r'^\s*TRACK\s+(\d+)\s+AUDIO', line)
