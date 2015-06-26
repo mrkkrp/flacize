@@ -213,7 +213,7 @@ class Track:
         # TRACKNUMBER & TRACKTOTAL
         tnum, *atot = (tags.get('TRACKNUMBER')
             or extract_num_prefix(bname)).split('/')
-        tnum = (int(tnum) if tnum else raw_index) + args.shift
+        tnum = (int(tnum) if tnum.isdigit() else raw_index) + args.shift
         if args.total:
             ttot = args.total
         else:
