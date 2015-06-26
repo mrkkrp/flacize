@@ -150,8 +150,8 @@ def output_name(out_dir, name, ext) -> str:
     Join directory ‘out_dir’, base name ‘name’ and extension ‘ext’. ‘name’
     is transformed so it can be used on all major operating systems.
     """
-    return os.path.join(out_dir, re.sub(r'[\x00/\\?%*:|"<>]', '_', name) +
-                        os.path.extsep + ext if ext else '')
+    return os.path.join(out_dir, re.sub('[\x00/\\\\?%*:|"<>#]', '_', name) +
+                        (os.path.extsep + ext if ext else ''))
 
 def protected_name(filename) -> str:
     """
