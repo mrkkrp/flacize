@@ -358,7 +358,7 @@ def get_dis_tracks(files) -> list:
     """
     total = len(files)
     tracks = []
-    for (i, f) in enumerate(files):
+    for (i, f) in enumerate(files, 1):
         F = taglib.File(f)
         tags = {k: F.tags[k][0] for k in F.tags}
         tracks.append(Track(f, tags=tags, raw_index=i, raw_total=total))
