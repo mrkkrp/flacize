@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from decimal import Decimal
 import argparse
 import copy
 import fnmatch
@@ -161,7 +162,7 @@ def protected_name(filename) -> str:
     head, tail = os.path.split(filename)
     return os.path.join(head, '__' + tail)
 
-def parse_time(time_str) -> float:
+def parse_time(time_str) -> Decimal:
     """
     Parse ‘time_str’ according to the pattern: <min>:<sec>:<millis>. Return
     number of seconds (float) or None on failure.
@@ -169,7 +170,8 @@ def parse_time(time_str) -> float:
     t = re.match(r'^(\d\d):(\d\d):(\d\d)$', time_str)
     if t:
         min, sec, millis = t.groups()
-        return float(min) * 60 + float(sec) + float(millis) * 0.01
+        return (Decimal(min) * 60 + Decimal(sec) +
+                Decimal(millis) * Decimal('0.01'))
     return None
 
 class Track:
@@ -179,7 +181,7 @@ class Track:
     various parameters of audio and collection of tags.
     """
     def __init__(self, origin, tags={},
-                 start_time=None, end_time=None,
+                 seek_pos=None, duration=None,
                  raw_index=1, raw_total=1):
         self.origin = origin
         # set quality parameters unless we must preserve it
@@ -192,8 +194,8 @@ class Track:
             self.sample_width = args.width
             self.channels     = args.chs
         # start and end time (only useful when splitting a CUE)
-        self.start_time = start_time
-        self.end_time = end_time
+        self.seek_pos = seek_pos
+        self.duration = duration
         # copy or deduce tags, ‘tags’ variable contains raw extracted data
         self.tags = {}
         pdir  = os.path.basename(os.path.abspath(args.dir))
@@ -250,11 +252,11 @@ class Track:
             nonlocal cmd
             if value:
                 cmd.extend([option, str(value)])
+        add_to_cmd(self.seek_pos, '-ss')
         cmd.extend(['-i', self.origin,
                     '-acodec', 'flac',
                     '-compression_level', '8'])
-        add_to_cmd(self.start_time, '-ss')
-        add_to_cmd(self.end_time, '-to')
+        add_to_cmd(self.duration, '-to')
         add_to_cmd(self.sample_rate, '-ar')
         add_to_cmd({8: 'u8', 16: 's16', 32: 's32'}.get(self.sample_width),
                    '-sample_fmt')
@@ -310,9 +312,9 @@ def get_cue_tracks(cue_file) -> list:
             if t:
                 t = t.group(1).strip('"')
                 if tag:
-                    params[index-1]['tags'][param_name] = t
+                    params[index - 1]['tags'][param_name] = t
                 else:
-                    params[index-1][param_name] = t
+                    params[index - 1][param_name] = t
                 return True
             return False
         # parameters that are common among several tracks
@@ -330,18 +332,19 @@ def get_cue_tracks(cue_file) -> list:
         if t: # new track
             index = int(t.group(1))
             params.append(copy.deepcopy(cmn_params))
-            params[index-1]['tags']['TRACKNUMBER'] = str(index)
-            params[index-1]['raw_index'] = index
+            params[index - 1]['tags']['TRACKNUMBER'] = str(index)
+            params[index - 1]['raw_index'] = index
         elif index: # continuing description of a track…
             if check_id(r'^\s*TITLE\s+("[^"]*"|\S+)\s*', 'TITLE', tag=True):
                 continue
-            if check_id(r'^\s*INDEX\s+01\s+([\d|:]+)\s*', 'start_time'):
-                time_str = params[index-1]['start_time']
+            if check_id(r'^\s*INDEX\s+01\s+([\d|:]+)\s*', 'seek_pos'):
+                time_str = params[index - 1]['seek_pos']
                 time_sec = parse_time(time_str)
-                params[index-1]['start_time'] = time_sec
-                # additional processing of ‘start_time’ value is required
+                params[index-1]['seek_pos'] = time_sec
+                # now we can write ‘duration’ parameter of previous track
                 if index > 1:
-                    params[index-2]['end_time'] = time_sec
+                    seek_pos = params[index - 2]['seek_pos']
+                    params[index - 2]['duration'] = time_sec - seek_pos
                 continue
     # add “TRACKTOTAL” tag
     track_total = len(params)
