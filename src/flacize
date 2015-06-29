@@ -280,7 +280,7 @@ def get_tracks() -> list:
     all_files = [os.path.join(args.dir, f) for f in os.listdir(args.dir)]
     cue_files = fnmatch.filter(all_files, '*.cue')
     if len(cue_files) > 1:
-        failure('too many .cue files in ‘%s’' % os.path.abspath(arg.dir))
+        failure('too many .cue files in ‘%s’' % os.path.abspath(args.dir))
     if len(cue_files) == 1:
         return get_cue_tracks(cue_files[0])
     else:
@@ -336,6 +336,8 @@ def get_cue_tracks(cue_file) -> list:
             params[index - 1]['raw_index'] = index
         elif index: # continuing description of a track…
             if check_id(r'^\s*TITLE\s+(".*"|\S+)\s*', 'TITLE', tag=True):
+                continue
+            if check_id(r'^\s*PERFORMER\s+(".*"|\S+)\s*', 'ARTIST', tag=True):
                 continue
             if check_id(r'^\s*INDEX\s+01\s+([\d|:]+)\s*', 'seek_pos'):
                 time_str = params[index - 1]['seek_pos']
