@@ -65,7 +65,8 @@ Python bindings for TabLib can be installed with `pip` quite easily too.
 
 To install `flacize`, `cd` into the repository and execute the following:
 
-```
+``` bash
+# pip install -r requirements.txt
 # bash install.sh
 ```
 
