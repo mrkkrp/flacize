@@ -2,7 +2,7 @@
 #
 # Convert any audio files into CDDA quality FLAC tracks.
 #
-# Copyright © 2015 Mark Karpov <markkarpov@openmailbox.org>
+# Copyright © 2015–2017 Mark Karpov <markkarpov92@gmail.com>
 #
 # flacize is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -36,7 +36,7 @@ version = '0.1.0'
 description = 'Convert any audio files into CDDA quality FLAC tracks'
 license = """flacize — Convert any audio files into CDDA quality FLAC tracks
 
-Copyright © 2015 Mark Karpov
+Copyright © 2015–2017 Mark Karpov
 
 flacize is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software

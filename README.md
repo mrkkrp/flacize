@@ -1,13 +1,12 @@
 # Any audio files → CDDA FLAC Tracks
 
 My audio collection has grown rather big. It consists of various audio files
-in different formats. Most part of it is in lossless form, for example:
+in different formats. The most part of it is in lossless form, for example:
 
 * FLAC files in separate tracks (various bps, sample rate, etc.);
 
-* one big FLAC file + `.cue` file (sometimes in higher quality than I can
-  perceive, in fact no one ever need something higher than CDDA standard
-  44.1 kHz, 16 bit, stereo, because blind tests prove that this is ample);
+* one big FLAC file + `.cue` file (sometimes with ridiculously high sample
+  rate, produced by people who believe in 192 kHz);
 
 * Monkey's Audio, `.ape` format (sometimes again one big file + `.cue`
   file);
@@ -16,9 +15,9 @@ in different formats. Most part of it is in lossless form, for example:
 
 * etc.
 
-So, I've decided to bring my entire collection to some uniform form by
-converting all sorts of files into FLAC files of CDDA quality, so that every
-track is a separate file. This is the best way to store music, I think.
+So, I've decided to bring my entire collection to a uniform state by
+converting all files to FLAC of CDDA quality, so that every track is a
+separate file. This is the best way to store music, I think.
 
 It feels like a nightmare to convert all the stuff manually, because I need
 to:
@@ -27,7 +26,7 @@ to:
 
 * add some tags that we can infer;
 
-* remove «comment» and «genre» tags because they are useless;
+* remove “comment” and “genre” tags because they are useless;
 
 * merge every double album into one digital album;
 
@@ -44,8 +43,8 @@ to:
 * I could create some reports about duration/quality of every album and save
   them as `.txt` files.
 
-For two last tasks I have [mkm3u](https://github.com/mrkkrp/mkm3u) and
-[LSA](https://github.com/mrkkrp/lsa). The rest of it is done with this
+For two last tasks I have [mkm3u](https://github.com/mrkkrp/mkm3u)
+and [LSA](https://github.com/mrkkrp/lsa). The rest of it is done with this
 script.
 
 ## Installation
@@ -53,12 +52,12 @@ script.
 This is a Python 3 script, you will need Python 3 installed to run it. Also,
 it depends on the following things that you need to install too:
 
-* [TagLib](http://taglib.github.io/) — a library for reading and editing the
+* [TagLib](http://taglib.github.io/)—a library for reading and editing the
   meta-data of several popular audio formats;
 
 * [TagLib bindings for Python](https://github.com/supermihi/pytaglib);
 
-* [FFmpeg](https://ffmpeg.org/) — über-level audio and video converter.
+* [FFmpeg](https://ffmpeg.org/)—über-level audio and video converter.
 
 TagLib and FFmpeg are available in repositories of most major distributions,
 Python bindings for TabLib can be installed with `pip` quite easily too.
@@ -104,6 +103,6 @@ optional arguments:
 
 ## License
 
-Copyright © 2015 Mark Karpov
+Copyright © 2015–2017 Mark Karpov
 
 Distributed under GNU GPL, version 3.
